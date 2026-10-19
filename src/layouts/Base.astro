@@ -1,0 +1,66 @@
+---
+import '../styles/global.css';
+import { url, site } from '../utils';
+
+interface Props { title?: string; description?: string; intro?: boolean; }
+const { title, description = `${site.name} — ${site.role} based in ${site.city}.`, intro = false } = Astro.props;
+const pageTitle = title ? `${title} — ${site.name}` : `${site.name} — ${site.role}`;
+const path = Astro.url.pathname;
+const isInfo = path.includes('/info');
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta name="theme-color" content="#0E0E0E" />
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet" />
+    <script is:inline>
+      if (sessionStorage.getItem('nav') === '1') document.documentElement.classList.add('from-nav');
+    </script>
+    <style is:inline>.from-nav .curtain{transform:translateY(0)}</style>
+  </head>
+  <body>
+    {intro && (
+      <div class="intro" aria-hidden="true">
+        <div>
+          <div class="intro-count">000</div>
+          <div class="intro-bar"><span></span></div>
+        </div>
+      </div>
+    )}
+    <div class="curtain" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true"><span>View</span></div>
+
+    <header class="site-header">
+      <a href={url()} class="logo" aria-label="Home">{site.name}.</a>
+      <span class="small clock">{site.city} <span data-clock>--:--</span> WIB</span>
+      <nav class="nav" aria-label="Main">
+        <a href={url('#work')}>Work</a>
+        <a href={url('info')} aria-current={isInfo ? 'page' : undefined}>Info</a>
+      </nav>
+    </header>
+
+    <main><slot /></main>
+
+    <footer class="cta">
+      <a class="cta-big" href={`mailto:${site.email}`}>Let’s talk.</a>
+      <div class="cta-meta">
+        <a class="link-line" href={`mailto:${site.email}`}>{site.email}</a>
+        <nav aria-label="Social">
+          {site.social.map((s) => <a class="link-line" href={s.href} target="_blank" rel="noopener">{s.label}</a>)}
+        </nav>
+        <span>© {new Date().getFullYear()} {site.name}</span>
+      </div>
+    </footer>
+
+    <script>import '../scripts/main.ts';</script>
+  </body>
+</html>

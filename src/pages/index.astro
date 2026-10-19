@@ -1,0 +1,152 @@
+---
+import { getCollection } from 'astro:content';
+import { Image, getImage } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import { url } from '../utils';
+
+const all = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const featured = all.filter((p) => p.data.featured);
+const previews = await Promise.all(
+  all.map(async (p) => ({ slug: p.id, img: await getImage({ src: p.data.cover, width: 520, format: 'webp' }) })),
+);
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+<Base intro>
+  <section class="hero wrap">
+    <h1 class="hero-title serif">
+      <span class="line"><span>Visual</span></span>
+      <span class="line"><span><em>designer.</em></span></span>
+    </h1>
+    <p class="hero-note" data-load>Brands, events, and key visuals.<br />Five years in Jakarta.</p>
+    <span class="hero-scroll small muted" aria-hidden="true" data-load>Scroll</span>
+  </section>
+
+  <section id="work" class="features wrap" aria-label="Selected work">
+    {featured.map((p, i) => (
+      <a class={`feature ${i % 2 ? 'is-even' : ''}`} href={url(`work/${p.id}`)} data-cursor>
+        <span class="feature-num serif" data-speed="-0.22" aria-hidden="true">{pad(i + 1)}</span>
+        <div class="mask feature-cover clip">
+          <div class="mask-in">
+            <Image src={p.data.cover} alt={p.data.title} widths={[640, 1024, 1600]} sizes="(max-width: 768px) 100vw, 66vw" loading={i === 0 ? 'eager' : 'lazy'} />
+          </div>
+        </div>
+        {p.data.detail && (
+          <div class="mask feature-detail" data-speed="0.16">
+            <div class="mask-in">
+              <Image src={p.data.detail} alt="" widths={[360, 600]} sizes="(max-width: 768px) 50vw, 25vw" />
+            </div>
+          </div>
+        )}
+        <div class="feature-meta" data-reveal>
+          <h2 class="serif">{p.data.title}</h2>
+          <span class="small muted">{p.data.category}, {p.data.year}</span>
+        </div>
+      </a>
+    ))}
+  </section>
+
+  <section class="index wrap" aria-label="All work">
+    <div class="index-head small muted">
+      <span>All work</span><span>{all.length} projects</span>
+    </div>
+    <ul class="index-list">
+      {all.map((p) => (
+        <li>
+          <a class="index-row" href={url(`work/${p.id}`)} data-slug={p.id}>
+            <span class="index-title serif">{p.data.title}</span>
+            <span class="index-cat small">{p.data.category}</span>
+            <span class="index-year small">{p.data.year}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+    <div class="index-preview" aria-hidden="true">
+      {previews.map((pv) => <img src={pv.img.src} alt="" data-preview={pv.slug} loading="lazy" />)}
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    min-height: 100svh; display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 1.5rem;
+    align-content: end; padding-bottom: clamp(2.5rem, 6vw, 4.5rem); position: relative;
+  }
+  .hero-title {
+    grid-column: 1 / -1; margin: 0; font-size: clamp(4.5rem, 15.5vw, 15rem);
+    line-height: .9; letter-spacing: -.035em;
+  }
+  .hero-title em { color: var(--gold); font-style: italic; }
+  .hero-note {
+    grid-column: 9 / -1; margin: 2rem 0 0; font-size: .9375rem; color: var(--soft); line-height: 1.5;
+  }
+  .hero-scroll { position: absolute; right: var(--gutter); top: 50%; writing-mode: vertical-rl; }
+  @media (max-width: 768px) {
+    .hero-title { font-size: 23vw; }
+    .hero-note { grid-column: 1 / -1; }
+    .hero-scroll { display: none; }
+  }
+
+  .features { padding-top: clamp(6rem, 14vw, 12rem); }
+  .feature {
+    position: relative; display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 1.5rem;
+    margin-bottom: clamp(9rem, 20vw, 18rem);
+  }
+  .feature-num {
+    position: absolute; z-index: 0; top: clamp(-5rem, -8vw, -3rem); right: 0;
+    font-style: italic; font-size: clamp(8rem, 22vw, 20rem); line-height: 1; color: var(--surface);
+    pointer-events: none;
+  }
+  .feature-cover { grid-column: 1 / 9; grid-row: 1; aspect-ratio: 4 / 3; z-index: 1; }
+  .feature-detail {
+    grid-column: 8 / 11; grid-row: 1; align-self: end; aspect-ratio: 3 / 4;
+    margin-bottom: -14%; z-index: 2;
+  }
+  .feature-meta { grid-column: 1 / 8; grid-row: 2; margin-top: 1.5rem; position: relative; z-index: 2; }
+  .feature-meta h2 {
+    margin: 0; font-size: clamp(1.75rem, 3.6vw, 3.25rem); line-height: 1.05; letter-spacing: -.01em;
+    transition: color .4s, font-style .4s;
+  }
+  .feature:hover .feature-meta h2 { color: var(--gold); font-style: italic; }
+  .feature .mask-in img { transition: scale 1.4s var(--ease-out); }
+  .feature:hover .feature-cover .mask-in img { scale: 1.04; }
+
+  .feature.is-even .feature-num { right: auto; left: 0; }
+  .feature.is-even .feature-cover { grid-column: 5 / 13; }
+  .feature.is-even .feature-detail { grid-column: 3 / 6; }
+  .feature.is-even .feature-meta { grid-column: 5 / 13; }
+
+  @media (max-width: 768px) {
+    .feature-cover, .feature.is-even .feature-cover { grid-column: 1 / -1; }
+    .feature-detail, .feature.is-even .feature-detail { grid-column: 8 / -1; grid-row: 2; margin: -30% 0 0; }
+    .feature.is-even .feature-detail { grid-column: 1 / 6; }
+    .feature-meta, .feature.is-even .feature-meta { grid-column: 1 / -1; grid-row: 3; }
+  }
+
+  .index { padding-bottom: clamp(6rem, 12vw, 10rem); }
+  .index-head { display: flex; justify-content: space-between; padding-bottom: 1rem; border-bottom: 1px solid var(--paper); }
+  .index-list { list-style: none; margin: 0; padding: 0; }
+  .index-row {
+    display: grid; grid-template-columns: 1fr 12rem 4rem; align-items: baseline; gap: 1rem;
+    padding: 1.1rem 0; border-bottom: 1px solid var(--line); transition: color .4s;
+  }
+  .index-title { font-size: clamp(1.5rem, 3.2vw, 2.75rem); line-height: 1.1; transition: transform .6s var(--ease-out), color .4s; }
+  .index-cat, .index-year { color: var(--muted); }
+  .index-year { text-align: right; font-variant-numeric: tabular-nums; }
+  .index-list.is-dim .index-row:not(:hover) { color: #3E3D3A; }
+  .index-list.is-dim .index-row:not(:hover) .index-cat,
+  .index-list.is-dim .index-row:not(:hover) .index-year { color: #3E3D3A; }
+  .index-row:hover .index-title, .index-row:focus-visible .index-title { transform: translateX(1rem); font-style: italic; color: var(--gold); }
+  @media (max-width: 640px) {
+    .index-row { grid-template-columns: 1fr auto; }
+    .index-cat { display: none; }
+  }
+
+  .index-preview {
+    position: fixed; top: 0; left: 0; z-index: 40; width: 15rem; aspect-ratio: 4 / 3;
+    pointer-events: none; overflow: hidden; scale: 0; transition: scale .5s var(--ease-out);
+  }
+  .index-preview.is-on { scale: 1; }
+  .index-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .3s; }
+  .index-preview img.is-active { opacity: 1; }
+  @media (hover: none) { .index-preview { display: none; } }
+</style>

@@ -1,0 +1,107 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import { url } from '../../utils';
+
+export async function getStaticPaths() {
+  const all = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+  return all.map((p, i) => ({ params: { slug: p.id }, props: { p, next: all[(i + 1) % all.length] } }));
+}
+const { p, next } = Astro.props;
+const { Content } = await render(p);
+const d = p.data;
+---
+<Base title={d.title} description={`${d.title} for ${d.client}. ${d.category}.`}>
+  <article>
+    <header class="cs-hero wrap">
+      <h1 class="cs-title serif">
+        <span class="line"><span>{d.title}</span></span>
+      </h1>
+      <dl class="cs-meta small" data-load>
+        <div><dt>Client</dt><dd>{d.client}</dd></div>
+        <div><dt>Role</dt><dd>{d.role}</dd></div>
+        <div><dt>Scope</dt><dd>{d.scope.join(', ')}</dd></div>
+        <div><dt>Year</dt><dd>{d.year}</dd></div>
+      </dl>
+    </header>
+
+    <div class="mask cs-cover clip">
+      <div class="mask-in">
+        <Image src={d.cover} alt={d.title} widths={[800, 1400, 2000]} sizes="100vw" loading="eager" />
+      </div>
+    </div>
+
+    <section class="cs-body wrap" data-reveal>
+      <Content />
+    </section>
+
+    <section class="cs-gallery wrap" aria-label="Execution">
+      {d.gallery.map((g) => (
+        <figure class={`g g-${g.size}`}>
+          <div class="mask clip">
+            <div class="mask-in"><Image src={g.src} alt={g.alt} widths={[640, 1200, 1800]} sizes={g.size === 'full' ? '100vw' : '50vw'} /></div>
+          </div>
+        </figure>
+      ))}
+    </section>
+
+    {d.result && (
+      <section class="cs-result wrap">
+        <p class="serif" data-reveal>{d.result}</p>
+      </section>
+    )}
+
+    <nav class="cs-next wrap" aria-label="Next project">
+      <a href={url(`work/${next.id}`)} data-cursor>
+        <span class="small muted">Next project</span>
+        <span class="cs-next-title serif">{next.data.title}</span>
+      </a>
+      <a class="small link-line back" href={url('#work')}>Back to all work</a>
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .cs-hero { min-height: 72svh; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 3rem; gap: 2.5rem; }
+  .cs-title { margin: 0; font-size: clamp(3rem, 10vw, 10rem); line-height: .95; letter-spacing: -.03em; max-width: 14ch; }
+  .cs-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; margin: 0; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+  .cs-meta dt { color: var(--muted); margin-bottom: .25rem; }
+  .cs-meta dd { margin: 0; }
+  @media (max-width: 640px) { .cs-meta { grid-template-columns: 1fr 1fr; } }
+
+  .cs-cover { height: clamp(22rem, 85vh, 60rem); }
+
+  .cs-body { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 1.5rem; padding-block: clamp(5rem, 12vw, 10rem); }
+  .cs-body :global(h2) {
+    grid-column: 1 / 4; margin: 0 0 1rem; font-family: var(--sans); font-weight: 400;
+    font-size: .8125rem; color: var(--gold);
+  }
+  .cs-body :global(p) {
+    grid-column: 5 / 12; margin: 0 0 4rem; font-family: var(--serif); font-size: clamp(1.25rem, 2vw, 1.75rem);
+    line-height: 1.45; max-width: 32ch;
+  }
+  .cs-body :global(p:last-child) { margin-bottom: 0; }
+  @media (max-width: 768px) {
+    .cs-body :global(h2), .cs-body :global(p) { grid-column: 1 / -1; }
+  }
+
+  .cs-gallery { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(1rem, 2vw, 1.5rem); row-gap: clamp(4rem, 10vw, 9rem); }
+  .g { margin: 0; }
+  .g-full { grid-column: 1 / -1; }
+  .g-full .mask { aspect-ratio: 16 / 9; }
+  .g-half { grid-column: span 6; }
+  .g-half .mask { aspect-ratio: 4 / 3; }
+  .g-tall { grid-column: 4 / 10; }
+  .g-tall .mask { aspect-ratio: 4 / 5; }
+  @media (max-width: 768px) { .g-half, .g-tall { grid-column: 1 / -1; } }
+
+  .cs-result { padding-block: clamp(7rem, 16vw, 14rem); }
+  .cs-result p { margin: 0 auto; max-width: 22ch; text-align: center; font-style: italic; font-size: clamp(2rem, 5vw, 4.5rem); line-height: 1.1; color: var(--gold); }
+
+  .cs-next { padding-bottom: clamp(5rem, 10vw, 8rem); display: flex; flex-direction: column; gap: 2rem; }
+  .cs-next a:first-child { display: flex; flex-direction: column; gap: .5rem; border-top: 1px solid var(--line); padding-top: 1.5rem; }
+  .cs-next-title { font-size: clamp(2.75rem, 9vw, 8rem); line-height: 1; letter-spacing: -.02em; transition: color .4s, transform .8s var(--ease-out); }
+  .cs-next a:first-child:hover .cs-next-title { color: var(--gold); font-style: italic; transform: translateX(1.5rem); }
+  .back { align-self: flex-start; color: var(--soft); }
+</style>
